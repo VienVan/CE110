@@ -28,12 +28,25 @@ void init(__uint64_t A[][SIZE], __uint64_t B[][SIZE])
 	int r, c;
 	for (c = 0; c < SIZE; c++) {
 		for (r = 0; r < SIZE; r++) {
-			A[r][c] = rand();
-			B[r][c] = rand();
+			A[r][c] = rand() % (10 + 1 - 0) + 0;
+			B[r][c] = rand() % (10 + 1 - 0) + 0;
 		}
 	}
 }
 
+// function to print matrix
+void print_matrix(__uint64_t A[][SIZE]) 
+{
+	int r, c;
+	for( c = 0; c < SIZE; c++) {
+		for (r = 0; r < SIZE; r++) {
+			printf("%llu", A[r][c]);
+			printf("|");
+		}
+	printf("\n");
+	}
+	printf("\n");
+}
 
 // verify 2 arrays C[] and D[] are the same
 int verify(__uint64_t C[][SIZE], __uint64_t D[][SIZE])
@@ -59,7 +72,6 @@ out:
 void matmul(__uint64_t A[][SIZE], __uint64_t B[][SIZE])
 {
 	int rowA, colB, idx;
-
 	for (rowA = 0; rowA < SIZE; rowA++) {
 		for (colB = 0; colB < SIZE; colB++) {
 			for (idx = 0; idx < SIZE; idx++) {
@@ -69,14 +81,17 @@ void matmul(__uint64_t A[][SIZE], __uint64_t B[][SIZE])
 	}
 }
 
-void transposematmul(__uint64_t A[][SIZE], __uint64_t tB[][SIZE])
+void transpose_matmul(__uint64_t A[][SIZE], __uint64_t tB[][SIZE])
 {
-	int row, idx;
-	for (row = 0; row < SIZE; row++) {
-		for (idx = 0; idx < SIZE; idx++) {
-			D[row][idx] += A[row][idx] * B[idx][row];
+	// printf("inside transpose_matmul, tB is: \n");
+	// print_matrix(tB);
+	int rowA, rowB, idx;
+	for (rowA = 0; rowA < SIZE; rowA++) {
+		for(rowB = 0; rowB < SIZE; rowB++ ){
+			for (idx = 0; idx < SIZE; idx++) {
+				D[rowA][rowB] += A[rowA][idx] * tB[rowB][idx];
+			}	
 		}
-		
 	}
 }
 
@@ -90,18 +105,29 @@ int main(int argc, char **argv)
 
 	init(A, B);
 	transpose(B, tB);
+	// print_matrix(B);
+	// print_matrix(tB);
 	memset(C, 0, sizeof(__uint64_t) * SIZE * SIZE);
 	memset(D, 0, sizeof(__uint64_t) * SIZE * SIZE);
-
+	// printf("A: \n");
+	// print_matrix(A);
+	// printf("B: \n");
+	// print_matrix(B);
+	// printf("tB: \n");
+	// print_matrix(tB);
 	t = clock();
+	// printf("A*B: \n");
 	matmul(A, B);
 	t = clock() - t;
 	time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
-
+	// print_matrix(C);
 	printf("Matmul took %f seconds to execute \n", time_taken);
+	// printf("A*tB: \n");
+	// transpose_matmul(A, tB);
+	// print_matrix(D);
 
 	t1 = clock();
-	transposematmul(A, tB);
+	transpose_matmul(A, tB);
 	t1 = clock() - t1;
 	time_transposed_taken = ((double)t1)/CLOCKS_PER_SEC; // in seconds
 
