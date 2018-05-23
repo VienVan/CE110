@@ -46,7 +46,7 @@ void print_matrix(__uint64_t A[][SIZE])
 	int r, c;
 	for( c = 0; c < SIZE; c++) {
 		for (r = 0; r < SIZE; r++) {
-			printf("%llu", A[r][c]);
+			printf("%lu", A[r][c]);
 			printf("|");
 		}
 	printf("\n");
@@ -101,27 +101,42 @@ void transpose_matmul(__uint64_t A[][SIZE], __uint64_t tB[][SIZE])
 
 void blocking(__uint64_t A[][SIZE], __uint64_t tB[][SIZE], int block_size) 
 {
-	int i, k, j, jj, kk;
-	for (k = 0; k < SIZE; k += block_size)
-		for (j = 0; j < SIZE; j += block_size)
-			for (i = 0; i < SIZE; ++i)
-				for (jj = j; jj < min(j + block_size, SIZE); ++jj)
-					for (kk = k; kk < min(k + block_size, SIZE); ++kk)
-						E[i][jj] += A[i][kk] * tB[jj][kk];
+	int idx, block_a, block_b, row_a, row_b;
+	
+	for (block_a = 0; block_a < SIZE; block_a += block_size) {
+		for (block_b = 0; block_b < SIZE; block_b += block_size) {
+			for (idx = 0; idx < SIZE; idx++) {
+				for (row_a = block_a; row_a < min(block_a + block_size, SIZE); row_a++) {
+					for (row_b = block_b; row_b < min(block_b + block_size, SIZE); row_b++) {
+						E[idx][row_a] += A[idx][row_b] * tB[row_a][row_b];
+					}		
+				}
+			}
+		}
+	}
 }
+
+void dgemm_block(__uint64_t A[][SIZE], __uint64_t tB[][SIZE], int block_size) {
+	int si, sj, sk, i, j, k;
+	__uint64_t sum;
+	for (sj = 0; sj < SIZE; sj += block_size)
+		for(si = 0; si < SIZE; si += block_size )
+			for( sk = 0; sk < SIZE; sk += block_size)
+				for( i = si; i < si+block_size; ++i)
+					for( j = sj; j < sj + block_size; ++j)
+						// sum = E[i][j];
+						for(k = sk; k < sk + block_size; k++)
+							E[i][j] += A[i][k] * tB[k][j];
+						// E[i][j] = sum;
+
+}
+
 int main(int argc, char *argv[])
 {
-	int block_size;
-	// printf("%d ", argc);
-	// printf("%s ", argv[0]); 
-	// printf("%s ", argv[1]);
 
-	if(argc == 2) {
-		printf("argv[1] %s", argv[1]);
-		block_size = (int) argv[1];
-	}
 	clock_t t;
 	clock_t t1;
+	clock_t t2;
 	double time_taken;
 	double time_transposed_taken;
 	int verified;
@@ -132,35 +147,40 @@ int main(int argc, char *argv[])
 	// print_matrix(tB);
 	memset(C, 0, sizeof(__uint64_t) * SIZE * SIZE);
 	memset(D, 0, sizeof(__uint64_t) * SIZE * SIZE);
-	memset(E, 0, sizeof(__uint64_t) * SIZE * SIZE);
-	// printf("A: \n");
-	// print_matrix(A);
-	// printf("B: \n");
-	// print_matrix(B);
-	// printf("tB: \n");
-	// print_matrix(tB);
-	// t = clock();
-	// printf("A*B: \n");
-	// matmul(A, B);
-	// t = clock() - t;
-	// time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
-	// print_matrix(C);
-	// printf("Matmul took %f seconds to execute \n", time_taken);
-	// printf("A*tB: \n");
-	// transpose_matmul(A, tB);
-	// print_matrix(D);
-
+	memset(E, 0, sizeof(__uint64_t) * SIZE * SIZE);	
+	
+	t = clock();
+	matmul(A, B);
+	t = clock() - t;
+	time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds
+	
+	printf("Matmul took %f seconds to execute \n", time_taken);
+	
 	t1 = clock();
-	printf("%d \n", block_size);
-	blocking(A, tB, 64);
+	transpose_matmul(A, tB);
 	t1 = clock() - t1;
+	verified = verify(C, D);
+	printf("verified %d \n", verified);
 	time_transposed_taken = ((double)t1)/CLOCKS_PER_SEC; // in seconds
+	printf("Transposed took %f seconds to execute \n", time_transposed_taken);
 
-	// blocking(A, tB);
 
-	// verified = verify(C, E);
+	for(int i = 1; i <= SIZE; i*=2) {
+		// print_matrix(C);
+		// printf("i: %d\n", i);
+		t2 = clock();
+		// blocking(A, tB, i);
+		dgemm_block(A, B, i);
+		t2 = clock() - t2;
+		
+		time_transposed_taken = ((double)t2)/CLOCKS_PER_SEC; // in seconds
+		verified = verify(C, E);
+		printf("verified %d \n", verified);
+		printf("blocking took %f seconds to execute. Block size: %d \n", time_transposed_taken, i);
+		memset(E, 0, sizeof(__uint64_t) * SIZE * SIZE);
+	}
 
-	// printf("verified %d \n", verified);
 
-	printf("blocking took %f seconds to execute \n", time_transposed_taken);
+	
+
 }
