@@ -1,10 +1,10 @@
-# CMPE110 HA5: Locality Detective
+#### CMPE110 HA5: Locality Detective
 
-## Canvas_group_name: Group_57
+Canvas_group_name: Group_57
 
-## Student: 1 Lawrence E Lawsone
+Student: 1 Lawrence E Lawsone
 
-## Student: 2 Vien van
+Student: 2 Vien van
 
 Files:
 - README.md - This file. Contains Class name, Assignment name, groupname, members' names, and files included in this report.
